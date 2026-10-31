@@ -1,20 +1,37 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import os
 
 # 1. 网页基础设置
 st.set_page_config(page_title="Yelp商业数据大屏", layout="wide")
 st.title("📊 Yelp 商户运营与用户价值分析大屏")
 st.markdown("---")
 
-# 2. 读取数据
+# 2. 读取数据（使用你提供的自动寻路法）
 @st.cache_data
 def load_data():
-    # 读取你之前关联好的多表宽表
-    df = pd.read_csv('data/clean/clean_merged_data.csv')
+    # 获取当前脚本所在目录
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # 自动向上找，直到找到 csv 文件
+    csv_path = os.path.join(current_dir, 'clean_merged_data.csv')
+    if not os.path.exists(csv_path):
+        csv_path = os.path.join(os.path.dirname(current_dir), 'clean_merged_data.csv')
+        
+    # 如果还没找到，尝试去 data/clean 文件夹找（彻底防呆）
+    if not os.path.exists(csv_path):
+        csv_path = os.path.join(os.path.dirname(current_dir), 'data', 'clean', 'clean_merged_data.csv')
+        
+    df = pd.read_csv(csv_path)
     return df
 
-df = load_data()
+# 加上异常捕获，方便网页上直接看报错
+try:
+    df = load_data()
+except Exception as e:
+    st.error(f"❌ 数据读取失败！请确认 clean_merged_data.csv 已经上传到仓库。报错信息：{e}")
+    st.stop()
 
 # 3. 侧边栏筛选器（交互联动）
 st.sidebar.header("⚙️ 数据筛选")
